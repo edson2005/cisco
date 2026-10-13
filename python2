@@ -1,0 +1,156 @@
+from decimal import Decimal, InvalidOperation
+def soles(centimos):
+    """Convierte céntimos a un texto con dos decimales."""
+    return f"S/ {centimos // 100}.{centimos % 100:02d}"
+
+# FASE 1: Inicio del sistema
+# Las listas son independientes, pero comparten el mismo índice.
+codigos = ["1", "2", "3", "4", "5" "6", "7", "8", "9", "10"]
+nombres = ["Arroz", "Azúcar", "Leche", "Aceite", "Fideos", "Cafe", "Huevos", "Queso", 
+ 	          "Quinua", "Avena"]
+precios = [450, 380, 520, 900, 320, 1650, 650, 1800,1200, 720] # Precios en céntimos
+existencias = [30, 25, 20, 15, 40, 32, 60, 28,37, 24]
+
+ingresos_totales = 0
+ventas_realizadas = 0
+
+print("========== MINIMARKET ==========")
+
+# Ciclo principal: atender a los clientes.
+while True:
+    respuesta = input(
+        "\n¿Atender a un cliente? (SI/NO): "   ).strip().upper()
+
+    if respuesta == "NO":
+        break
+    elif respuesta != "SI":
+        print("Respuesta inválida. Ingrese SI o NO.")
+        continue
+    else:
+        subtotal = 0
+        compra = []
+
+    # Mostrar el listado del inventario.
+    print("\nLISTADO DE PRODUCTOS")
+    for i in range(len(codigos)):
+        print(
+            f"{codigos[i]}: {nombres[i]} | "
+            f"Precio: {soles(precios[i])} | "
+            f"Stock: {existencias[i]} unidades"
+        )
+
+    print("Ingrese FIN para terminar la compra.")
+
+    # FASE 2: Registro continuo de productos.
+    while True:
+        codigo = input("\nCódigo del producto: ").strip().upper()
+
+        if codigo == "FIN":
+            break
+        elif codigo not in codigos:
+            print("Advertencia: el código no existe.")
+            continue
+        else:
+            indice = codigos.index(codigo)
+
+        try:
+            cantidad = int(input("Cantidad de unidades: "))
+        except ValueError:
+            print("Advertencia: ingrese un número entero.")
+            continue
+
+        if cantidad <= 0 or cantidad > existencias[indice]:
+            print(
+                "Advertencia: la cantidad debe ser mayor que cero "
+                f"y no superar el stock ({existencias[indice]})."
+            )
+            continue
+
+        # Actualizar únicamente después de validar.
+        importe = precios[indice] * cantidad
+        subtotal += importe
+        existencias[indice] -= cantidad
+
+        # Cada fila contiene:
+        # [nombre, cantidad, precio unitario, importe]
+        compra.append([
+            nombres[indice],
+            cantidad,
+            precios[indice],
+            importe
+        ])
+
+        print(f"Producto registrado. Subtotal: {soles(subtotal)}")
+
+    # FASE 3: Cierre de la venta.
+    if not compra:
+        print("Compra vacía. No se realizará ningún cobro.")
+        continue
+
+    print(f"\nTotal a pagar: {soles(subtotal)}")
+
+    while True:
+        entrada = input("Dinero recibido en soles: ").strip()
+
+        try:
+            monto = Decimal(entrada.replace(",", "."))
+
+            if not monto.is_finite():
+                print("Ingrese un monto válido.")
+                continue
+
+            if monto < 0:
+                print("El monto no puede ser negativo.")
+                continue
+
+            centimos = monto * 100
+
+            if centimos != centimos.to_integral_value():
+                print("Ingrese un monto con máximo dos decimales.")
+                continue
+
+            recibido = int(centimos)
+
+        except (InvalidOperation, ValueError, OverflowError):
+            print("Ingrese un monto numérico válido.")
+            continue
+
+        if recibido < subtotal:
+            print("Dinero insuficiente. Ingrese nuevamente el monto.")
+        else:
+            vuelto = recibido - subtotal
+            break
+
+    ingresos_totales += subtotal
+    ventas_realizadas += 1
+
+    # Imprimir el listado de productos comprados.
+    print("\n========== BOLETA DIGITAL ==========")
+    print(f"Venta N.º {ventas_realizadas}")
+
+    for nombre, cantidad, precio, importe in compra:
+        print(
+            f"{nombre}: {cantidad} x {soles(precio)}"
+            f" = {soles(importe)}"
+        )
+
+    print("------------------------------------")
+    print(f"TOTAL:    {soles(subtotal)}")
+    print(f"RECIBIDO: {soles(recibido)}")
+    print(f"VUELTO:   {soles(vuelto)}")
+    print("====================================")
+
+# FASE 4: Control y reportes.
+print("\n========== CIERRE DE CAJA ==========")
+print(f"Ventas realizadas: {ventas_realizadas}")
+print(f"Ingresos totales: {soles(ingresos_totales)}")
+
+print("\nLISTADO DEL INVENTARIO RESTANTE")
+for i in range(len(codigos)):
+    print(
+        f"{codigos[i]}: {nombres[i]} | "
+        f"{existencias[i]} unidades"
+    )
+
+print("===================================")
+
